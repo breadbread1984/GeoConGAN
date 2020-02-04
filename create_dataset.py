@@ -27,7 +27,7 @@ def create_synthesis_segment_dataset(rootdir, with_object = False, filename = "s
   background = (14,255,14);
   dirs = {True: ['male_noobject', 'male_object', 'female_noobject', 'female_object'], \
           False: ['male_noobject', 'female_noobject']};
-  if os.path.exists(os.path.exists('datasets')): os.path.mkdir('datasets');
+  if os.path.exists(os.path.exists('datasets')): os.mkdir('datasets');
   writer = tf.io.TFRecordWriter(os.path.join('datasets', filename));
   count = 0;
   for dir in dirs[with_object]:
