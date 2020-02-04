@@ -2,10 +2,11 @@
 
 import os;
 from re import match;
+import numpy as np;
 import cv2;
 import tensorflow as tf;
 
-def parse_function(serialized_example):
+def segment_parse_function(serialized_example):
 
   feature = tf.io.parse_single_example(
     serialized_example,
@@ -16,18 +17,24 @@ def parse_function(serialized_example):
     }
   );
   data = tf.io.decode_raw(feature['data']);
-  data = tf.reshape(data, (480, 640, 3));
+  data = tf.cast(tf.reshape(data, (480, 640, 3)), dtype = tf.float32) / 255.;
+  data = tf.image.resize(data, (270, 360));
   joints = tf.reshape(feature['joints'], (21, 3));
-  mask = tf.reshape(feature['mask'], (480, 640));
+  mask = tf.reshape(feature['mask'], (480, 640, 1));
+  mask = tf.image.resize(mask, (270, 360));
   mask = tf.cast(mask, dtype = tf.int32);
+  seed = np.random.randint(low = 0, high = 10000);
+  data = tf.image.random_crop(data, size = (256,256), seed = seed);
+  mask = tf.image.random_crop(mask, size = (256,256), seed = seed);
+  mask = tf.squeeze(mask);
   return data, (joints, mask);
 
-def create_synthesis_segment_dataset(rootdir, with_object = False, filename = "synthesis.tfrecord"):
+def create_dataset(rootdir, with_object = False, filename = "synthesis.tfrecord"):
 
   background = (14,255,14);
   dirs = {True: ['male_noobject', 'male_object', 'female_noobject', 'female_object'], \
           False: ['male_noobject', 'female_noobject']};
-  if os.path.exists(os.path.exists('datasets')): os.mkdir('datasets');
+  if not os.path.exists('datasets'): os.mkdir('datasets');
   writer = tf.io.TFRecordWriter(os.path.join('datasets', filename));
   count = 0;
   for dir in dirs[with_object]:
