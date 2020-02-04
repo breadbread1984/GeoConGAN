@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 import os;
-from re import match;
+from re import search;
 import numpy as np;
 import cv2;
 import tensorflow as tf;
@@ -16,18 +16,14 @@ def segment_parse_function(serialized_example):
       'mask': tf.io.FixedLenFeature((480 * 640), dtype = tf.int64)
     }
   );
-  data = tf.io.decode_raw(feature['data']);
-  data = tf.cast(tf.reshape(data, (480, 640, 3)), dtype = tf.float32) / 255.;
-  data = tf.image.resize(data, (270, 360));
-  joints = tf.reshape(feature['joints'], (21, 3));
+  data = tf.io.decode_jpeg(feature['data']);
+  data = tf.cast(tf.reshape(data, (480, 640, 3)), dtype = tf.float32);
+  data = tf.image.resize(data, (256, 256)) / 127.5 - 1;
+  #joints = tf.reshape(feature['joints'], (21, 3));
   mask = tf.reshape(feature['mask'], (480, 640, 1));
-  mask = tf.image.resize(mask, (270, 360));
+  mask = tf.image.resize(mask, (256, 256));
   mask = tf.cast(mask, dtype = tf.int32);
-  seed = np.random.randint(low = 0, high = 10000);
-  data = tf.image.random_crop(data, size = (256,256), seed = seed);
-  mask = tf.image.random_crop(mask, size = (256,256), seed = seed);
-  mask = tf.squeeze(mask);
-  return data, (joints, mask);
+  return data, mask;
 
 def create_dataset(rootdir, with_object = False, filename = "synthesis.tfrecord"):
 
@@ -43,7 +39,7 @@ def create_dataset(rootdir, with_object = False, filename = "synthesis.tfrecord"
       for cam in os.listdir(os.path.join(rootdir, dir, seq)):
         for num in os.listdir(os.path.join(rootdir, dir, seq, cam)):
           for file in os.listdir(os.path.join(rootdir, dir, seq, cam, num)):
-            result = re.search(r"^([0-9]+)_color\.png", file);
+            result = search(r"^([0-9]+)_color\.png", file);
             if result is None: continue;
             imgpath = os.path.join(rootdir, dir, seq, cam, num, file);
             labelpath = os.path.join(rootdir, dir, seq, cam, num, result[1] + "_joint_pos.txt");
@@ -56,10 +52,13 @@ def create_dataset(rootdir, with_object = False, filename = "synthesis.tfrecord"
               print("failed to open " + labelpath);
               continue;
             joints = np.array(label.readlines()[0].strip().split(',')).astype('float32');
-            mask = np.logical_not(np.logical_and(np.logical_and(img[...,0] == 14, img[...,1] == 255),img[...,2] == 14)).astype('int64');
+            if joints.shape[0] != 21 * 3:
+              print("invalid joint coordinate number");
+              continue;
+            mask = np.logical_not(np.logical_and(np.logical_and(img[...,0] == 14, img[...,1] == 255),img[...,2] == 14)).astype('int8');
             trainsample = tf.train.Example(features = tf.train.Features(
               feature = {
-                'data': tf.train.Feature(bytes_list = tf.train.BytesList(value = [img.tobytes()])),
+                'data': tf.train.Feature(bytes_list = tf.train.BytesList(value = [tf.io.encode_jpeg(img)])),
                 'joints': tf.train.Feature(float_list = tf.train.FloatList(value = joints)),
                 'mask': tf.train.Feature(int64_list = tf.train.Int64List(value = mask.reshape(-1)))
               }
