@@ -29,6 +29,7 @@ def create_synthesis_segment_dataset(rootdir, with_object = False, filename = "s
           False: ['male_noobject', 'female_noobject']};
   if os.path.exists(os.path.exists('datasets')): os.path.mkdir('datasets');
   writer = tf.io.TFRecordWriter(os.path.join('datasets', filename));
+  count = 0;
   for dir in dirs[with_object]:
     assert os.path.exists(os.path.join(rootdir, dir));
     for seq in os.listdir(os.path.join(rootdir, dir)):
@@ -57,7 +58,9 @@ def create_synthesis_segment_dataset(rootdir, with_object = False, filename = "s
               }
             ));
             writer.write(trainsample.SerializeToString());
+            count += 1;
   writer.close();
+  print('written ' + str(count) + " samples to " + filename);
 
 if __name__ == "__main__":
 
