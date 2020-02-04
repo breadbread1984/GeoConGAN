@@ -36,7 +36,7 @@ def create_synthesis_segment_dataset(rootdir, with_object = False, filename = "s
       for cam in os.listdir(os.path.join(rootdir, dir, seq)):
         for num in os.listdir(os.path.join(rootdir, dir, seq, cam)):
           for file in os.listdir(os.path.join(rootdir, dir, seq, cam, num)):
-            result = search(r"^([0-9]+)_color\.png", file);
+            result = re.search(r"^([0-9]+)_color\.png", file);
             if result is None: continue;
             imgpath = os.path.join(rootdir, dir, seq, cam, num, file);
             labelpath = os.path.join(rootdir, dir, seq, cam, num, result[1] + "_joint_pos.txt");
