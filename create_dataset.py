@@ -71,4 +71,4 @@ def create_dataset(rootdir, with_object = False, filename = "synthesis.tfrecord"
 if __name__ == "__main__":
 
   assert tf.executing_eagerly();
-  create_synthesis_segment_dataset('/mnt/SynthHands_Release');
+  create_dataset('/mnt/SynthHands_Release');
