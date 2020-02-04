@@ -58,7 +58,7 @@ def create_dataset(rootdir, with_object = False, filename = "synthesis.tfrecord"
             mask = np.logical_not(np.logical_and(np.logical_and(img[...,0] == 14, img[...,1] == 255),img[...,2] == 14)).astype('int8');
             trainsample = tf.train.Example(features = tf.train.Features(
               feature = {
-                'data': tf.train.Feature(bytes_list = tf.train.BytesList(value = [tf.io.encode_jpeg(img)])),
+                'data': tf.train.Feature(bytes_list = tf.train.BytesList(value = [tf.io.encode_jpeg(img).numpy()])),
                 'joints': tf.train.Feature(float_list = tf.train.FloatList(value = joints)),
                 'mask': tf.train.Feature(int64_list = tf.train.Int64List(value = mask.reshape(-1)))
               }
