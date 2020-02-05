@@ -31,14 +31,12 @@ def real_parse_function(serialized_example):
     serialized_example,
     features = {
       'data': tf.io.FixedLenFeature((), dtype = tf.string),
-      'mask': tf.io.FixedLenFeature((1200 * 1200), dtype = tf.int64)
+      'mask': tf.io.FixedLenFeature((256 * 256), dtype = tf.int64)
     }
   );
   data = tf.io.decode_jpeg(feature['data']);
-  data = tf.cast(tf.reshape(data, (1200, 1200, 3)), dtype = tf.float32);
-  data = tf.image.resize(data, (256, 256)) / 127.5 - 1;
-  mask = tf.reshape(feature['mask'], (1200, 1200, 1));
-  mask = tf.image.resize(mask, (256, 256));
+  data = tf.cast(tf.reshape(data, (256, 256, 3)), dtype = tf.float32) / 127.5 - 1;
+  mask = tf.reshape(feature['mask'], (256, 256, 1));
   mask = tf.cast(mask, dtype = tf.int32);
   return data, mask;
 
@@ -96,11 +94,11 @@ def create_real_dataset(rootdir, filename = "real.tfrecord"):
   writer = tf.io.TFRecordWriter(os.path.join('datasets', filename));
   count = 0;
   for dir in dirs:
-    if not os.path.exists(os.path.join(rootdir, dir, 'white')): continue;
-    for file in os.listdir(os.path.join(rootdir, dir, 'white')):
-      result = search(r"^image_[0-9]+\.jpg", file);
+    if not os.path.exists(os.path.join(rootdir, dir, 'color')): continue;
+    for file in os.listdir(os.path.join(rootdir, dir, 'color')):
+      result = search(r"^image_[0-9]+\.(jpg|png)$", file);
       if result is None: continue;
-      imgpath = os.path.join(rootdir, dir, 'white', file);
+      imgpath = os.path.join(rootdir, dir, 'color', file);
       labelpath = os.path.join(rootdir, dir, 'masks', file);
       img = cv2.imread(imgpath);
       img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB);
@@ -112,6 +110,9 @@ def create_real_dataset(rootdir, filename = "real.tfrecord"):
         print("failed to open " + labelpath);
         continue;
       mask = (mask[...,0] == 255).astype('int8');
+      mask = cv2.resize(mask, (256,256));
+      img[np.where((mask != [255,]).all(axis = 2))] = [255,255,255];
+      img = cv2.resize(img, (256,256));
       trainsample = tf.train.Example(features = tf.train.Features(
         feature = {
           'data': tf.train.Feature(bytes_list = tf.train.BytesList(value = [tf.io.encode_jpeg(img).numpy()])),
