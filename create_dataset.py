@@ -25,7 +25,7 @@ def segment_parse_function(serialized_example):
   mask = tf.cast(mask, dtype = tf.int32);
   return data, mask;
 
-def create_dataset(rootdir, with_object = False, filename = "synthesis.tfrecord"):
+def create_dataset(rootdir, with_object = False, filename = "synthetic.tfrecord"):
 
   background = (14,255,14);
   dirs = {True: ['male_noobject', 'male_object', 'female_noobject', 'female_object'], \
