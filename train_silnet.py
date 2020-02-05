@@ -21,7 +21,7 @@ def main():
     with tf.GradientTape() as tape:
       output = silnet(data);
       loss = tf.keras.losses.SparseCategoricalCrossentropy()(mask, output);
-    grads = tape.gradients(loss, silnet.trainable_variables);
+    grads = tape.gradient(loss, silnet.trainable_variables);
     avg_loss.update_state(loss);
     optimizer.apply_gradients(zip(grads, silnet.trainable_variables));
     if tf.equal(optimizer.iterations % 100, 0):
