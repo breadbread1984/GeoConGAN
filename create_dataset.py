@@ -111,6 +111,7 @@ def create_real_dataset(rootdir, filename = "real.tfrecord"):
       if mask is None:
         print("failed to open " + labelpath);
         continue;
+      mask = (mask[...,0] == 255).astype('int8');
       trainsample = tf.train.Example(features = tf.train.Features(
         feature = {
           'data': tf.train.Feature(bytes_list = tf.train.BytesList(value = [tf.io.encode_jpeg(img).numpy()])),
