@@ -34,7 +34,7 @@ def main():
         tf.summary.scalar('loss', avg_loss.result(), step = optimizer.iterations);
         tf.summary.image('segmentation', visualize, step = optimizer.iterations);
       print('Step #%d loss: %.6f' % (optimizer.iterations, avg_loss.result()));
-      if avg_loss.result() < 0.01: break;
+      if avg_loss.result() < 1e-5: break;
       avg_loss.reset_states();
     if tf.equal(optimizer.iterations % 1000, 0):
       checkpoint.save(os.path.join('checkpoints', 'ckpt'));

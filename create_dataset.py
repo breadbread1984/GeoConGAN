@@ -44,6 +44,7 @@ def create_dataset(rootdir, with_object = False, filename = "synthesis.tfrecord"
             imgpath = os.path.join(rootdir, dir, seq, cam, num, file);
             labelpath = os.path.join(rootdir, dir, seq, cam, num, result[1] + "_joint_pos.txt");
             img = cv2.imread(imgpath);
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB);
             if img is None:
               print("failed to open " + imgpath);
               continue;
