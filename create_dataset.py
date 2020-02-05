@@ -103,6 +103,10 @@ def create_real_dataset(rootdir, filename = "real.tfrecord"):
         labelpath = os.path.join(rootdir, dir, 'masks', "image_" + result[1] + ".jpg");
       elif os.path.exists(os.path.join(rootdir, dir, 'masks', "image_" + result[1] + ".png")):
         labelpath = os.path.join(rootdir, dir, 'masks', "image_" + result[1] + ".png");
+      elif os.path.exists(os.path.join(rootdir, dir, 'mask', "image_" + result[1] + ".jpg")):
+        labelpath = os.path.join(rootdir, dir, 'mask', "image_" + result[1] + ".jpg");
+      elif os.path.exists(os.path.join(rootdir, dir, 'mask', "image_" + result[1] + ".png")):
+        labelpath = os.path.join(rootdir, dir, 'mask', "image_" + result[1] + ".png");
       else:
         print("no label file for image " + imgpath);
         continue;
