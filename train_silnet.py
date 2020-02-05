@@ -2,18 +2,21 @@
 
 import os;
 import tensorflow as tf;
-from create_dataset import segment_parse_function;
+from create_dataset import synthetic_parse_function, real_parse_function;
 from models import SilNet;
 
 batch_size = 8;
 input_shape = (256,256,3);
 dataset_size = 93476;
 
-def main():
+def main(is_synth = True):
 
   silnet = SilNet(input_shape);
   optimizer = tf.keras.optimizers.Adam(learning_rate = 1e-3, beta_1 = 0.5);
-  trainset = iter(tf.data.TFRecordDataset(os.path.join('datasets','synthetic.tfrecord')).repeat(-1).map(segment_parse_function).shuffle(batch_size).batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE));
+  if is_synth:
+    trainset = iter(tf.data.TFRecordDataset(os.path.join('datasets','synthetic.tfrecord')).repeat(-1).map(synthetic_parse_function).shuffle(batch_size).batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE));
+  else:
+    trainset = iter(tf.data.TFRecordDataset(os.path.join('datasets','real.tfrecord')).repeat(-1).map(real_parse_function).shuffle(batch_size).batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE))
   checkpoint = tf.train.Checkpoint(model = silnet, optimizer = optimizer);
   checkpoint.restore(tf.train.latest_checkpoint('checkpoints'));
   log = tf.summary.create_file_writer('checkpoints');
@@ -45,4 +48,11 @@ def main():
 if __name__ == "__main__":
 
   assert tf.executing_eagerly();
-  main();
+  import sys;
+  if len(sys.argv) != 2:
+    print("Usage: " + sys.argv[0] + " [(synthetic|real)]");
+    exit(0);
+  if sys.argv.strip() not in ['synthetic', 'real']:
+    print('training mode must be synthetic or real');
+    exit(1);
+  main(True if sys.argv.strip() == "synthetic" else False);

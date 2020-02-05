@@ -6,7 +6,7 @@ import numpy as np;
 import cv2;
 import tensorflow as tf;
 
-def segment_parse_function(serialized_example):
+def synthetic_parse_function(serialized_example):
 
   feature = tf.io.parse_single_example(
     serialized_example,
@@ -25,7 +25,24 @@ def segment_parse_function(serialized_example):
   mask = tf.cast(mask, dtype = tf.int32);
   return data, mask;
 
-def create_dataset(rootdir, with_object = False, filename = "synthetic.tfrecord"):
+def real_parse_function(serialized_example):
+
+  feature = tf.io.parse_single_example(
+    serialized_example,
+    features = {
+      'data': tf.io.FixedLenFeature((), dtype = tf.string),
+      'mask': tf.io.FixedLenFeature((1200 * 1200), dtype = tf.int64)
+    }
+  );
+  data = tf.io.decode_jpeg(feature['data']);
+  data = tf.cast(tf.reshape(data, (1200, 1200, 3)), dtype = tf.float32);
+  data = tf.image.resize(data, (256, 256)) / 127.5 - 1;
+  mask = tf.reshape(feature['mask'], (1200, 1200, 1));
+  mask = tf.image.resize(mask, (256, 256));
+  mask = tf.cast(mask, dtype = tf.int32);
+  return data, mask;
+
+def create_synthetic_dataset(rootdir, with_object = False, filename = "synthetic.tfrecord"):
 
   background = (14,255,14);
   dirs = {True: ['male_noobject', 'male_object', 'female_noobject', 'female_object'], \
@@ -70,7 +87,43 @@ def create_dataset(rootdir, with_object = False, filename = "synthetic.tfrecord"
   writer.close();
   print('written ' + str(count) + " samples to " + filename);
 
+def create_real_dataset(rootdir, filename = "real.tfrecord"):
+
+  background = (14,255,14);
+  dirs = ['user01','user02','user04_01','user05_01','user06_01','user06_03','user07_static', \
+          'user01_static','user03','user04_02','user05_02','user06_02','user07'];
+  if not os.path.exists('datasets'): os.mkdir('datasets');
+  writer = tf.io.TFRecordWriter(os.path.join('datasets', filename));
+  count = 0;
+  for dir in dirs:
+    if not os.path.exists(os.path.join(rootdir, dir, 'white')): continue;
+    for file in os.listdir(os.path.join(rootdir, dir, 'white')):
+      result = search(r"^image_[0-9]+\.jpg", file);
+      if result is None: continue;
+      imgpath = os.path.join(rootdir, dir, 'white', file);
+      labelpath = os.path.join(rootdir, dir, 'mask', file);
+      img = cv2.imread(imgpath);
+      img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB);
+      if img is None:
+        print("failed to open " + imgpath);
+        continue;
+      mask = cv2.imread(labelpath, cv2.IMREAD_GRAYSCALE);
+      if mask is None:
+        print("failed to open " + labelpath);
+        continue;
+      trainsample = tf.train.Example(features = tf.train.Features(
+        feature = {
+          'data': tf.train.Feature(bytes_list = tf.train.BytesList(value = [tf.io.encode_jpeg(img).numpy()])),
+          'mask': tf.train.Feature(int64_list = tf.train.Int64List(value = mask.reshape(-1)))
+        }
+      ));
+      writer.write(trainsample.SerializeToString());
+      count += 1;
+  writer.close();
+  print('written ' + str(count) + " samples to " + filename);
+
 if __name__ == "__main__":
 
   assert tf.executing_eagerly();
-  create_dataset('/mnt/SynthHands_Release');
+  create_synthetic_dataset('/mnt/SynthHands_Release');
+  create_real_dataset('/mnt/RealHands');
