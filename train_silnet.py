@@ -52,7 +52,7 @@ if __name__ == "__main__":
   if len(sys.argv) != 2:
     print("Usage: " + sys.argv[0] + " [(synthetic|real)]");
     exit(0);
-  if sys.argv.strip() not in ['synthetic', 'real']:
+  if sys.argv[1].strip() not in ['synthetic', 'real']:
     print('training mode must be synthetic or real');
     exit(1);
-  main(True if sys.argv.strip() == "synthetic" else False);
+  main(True if sys.argv[1].strip() == "synthetic" else False);
