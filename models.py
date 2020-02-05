@@ -35,7 +35,7 @@ def SilNet(input_shape):
   results = tfa.layers.InstanceNormalization()(results);
   results = tf.keras.layers.Conv2D(filters = 64, kernel_size = (3,3), padding = 'same')(results);
   results = tf.keras.layers.LeakyReLU()(results);
-  results = tf.keras.layers.Conv2D(filters = 2, kernel_size = (1,1), padding = 'same')(results);
+  results = tf.keras.layers.Conv2D(filters = 2, kernel_size = (1,1), padding = 'same', activation = tf.keras.layers.Softmax())(results);
   return tf.keras.Model(inputs = inputs, outputs = results);
 
 if __name__ == "__main__":

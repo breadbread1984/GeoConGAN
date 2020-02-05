@@ -11,16 +11,28 @@ input_shape = (256,256,3);
 def main():
 
   silnet = SilNet(input_shape);
-  @tf.function
-  def loss(outputs, labels):
-    return tf.keras.losses.SparseCategoricalCrossentropy(from_logits = True)(labels, outputs);
-  silnet.compile(optimizer = tf.keras.optimizers.Adam(0.001), loss = loss);
-  # load dataset
-  trainset = tf.data.TFRecordDataset(os.path.join('datasets','synthesis.tfrecord')).repeat(-1).map(segment_parse_function).shuffle(batch_size).batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE);
-  # train
-  silnet.fit(trainset, epochs = 20);
-  if not os.path.exists('models'): os.mkdir('models');
-  silnet.save(os.path.join('models', 'silnet.h5'));
+  optimizer = tf.keras.optimizers.Adam(learning_rate = 1e-3, beta_1 = 0.5);
+  trainset = iter(tf.data.TFRecordDataset(os.path.join('datasets','synthesis.tfrecord')).repeat(-1).map(segment_parse_function).shuffle(batch_size).batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE));
+  checkpoint = tf.train.Checkpoint(model = silnet, optimizer = optimizer);
+  log = tf.summary.create_file_writer('checkpoints');
+  avg_loss = tf.keras.metrics.Mean(name = 'loss', dtype = tf.float32);
+  while True:
+    data, mask = next(trainset);
+    with tf.GradientTape() as tape:
+      output = silnet(data);
+      loss = tf.keras.losses.SparseCategoricalCrossentropy()(mask, output);
+    grads = tape.gradients(loss, silnet.trainable_variables);
+    avg_loss.update_state(loss);
+    optimizer.apply_gradients(zip(grads, silnet.trainable_variables));
+    if tf.equal(optimizer.iterations % 100, 0):
+      with log.as_default():
+        tf.summary.scalar('loss', avg_loss.result(), step = optimizer.iterations);
+      print('Step #%d loss: %.6f' % (optimizer.iterations, avg_loss.result()));
+      if avg_loss.result() < 0.01: break;
+      avg_loss.reset_states();
+    if tf.equal(optimizer.iterations % 1000, 0):
+      checkpoint.save(os.path.join('checkpoint', 'ckpt'));
+  silnet.save('silnet.h5');
   
 if __name__ == "__main__":
 
