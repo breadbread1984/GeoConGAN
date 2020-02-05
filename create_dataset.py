@@ -96,10 +96,16 @@ def create_real_dataset(rootdir, filename = "real.tfrecord"):
   for dir in dirs:
     if not os.path.exists(os.path.join(rootdir, dir, 'color')): continue;
     for file in os.listdir(os.path.join(rootdir, dir, 'color')):
-      result = search(r"^image_[0-9]+\.(jpg|png)$", file);
+      result = search(r"^image_([0-9]+)_color\.(jpg|png)$", file);
       if result is None: continue;
       imgpath = os.path.join(rootdir, dir, 'color', file);
-      labelpath = os.path.join(rootdir, dir, 'masks', file);
+      if os.path.exists(os.path.join(rootdir, dir, 'masks', "image_" + result[1] + ".jpg")):
+        labelpath = os.path.join(rootdir, dir, 'masks', "image_" + result[1] + ".jpg");
+      elif os.path.exists(os.path.join(rootdir, dir, 'masks', "image_" + result[1] + ".png"))::
+        labelpath = os.path.join(rootdir, dir, 'masks', "image_" + result[1] + ".png");
+      else:
+        print("no label file for image " + imgpath);
+        continue;
       img = cv2.imread(imgpath);
       img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB);
       if img is None:
