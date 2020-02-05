@@ -13,7 +13,7 @@ def main():
 
   silnet = SilNet(input_shape);
   optimizer = tf.keras.optimizers.Adam(learning_rate = 1e-3, beta_1 = 0.5);
-  trainset = iter(tf.data.TFRecordDataset(os.path.join('datasets','synthesis.tfrecord')).repeat(-1).map(segment_parse_function).shuffle(batch_size).batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE));
+  trainset = iter(tf.data.TFRecordDataset(os.path.join('datasets','synthetic.tfrecord')).repeat(-1).map(segment_parse_function).shuffle(batch_size).batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE));
   checkpoint = tf.train.Checkpoint(model = silnet, optimizer = optimizer);
   checkpoint.restore(tf.train.latest_checkpoint('checkpoints'));
   log = tf.summary.create_file_writer('checkpoints');
