@@ -37,7 +37,7 @@ def main():
       if avg_loss.result() < 0.01: break;
       avg_loss.reset_states();
     if tf.equal(optimizer.iterations % 1000, 0):
-      checkpoint.save(os.path.join('checkpoint', 'ckpt'));
+      checkpoint.save(os.path.join('checkpoints', 'ckpt'));
   silnet.save('silnet.h5');
 
 if __name__ == "__main__":
