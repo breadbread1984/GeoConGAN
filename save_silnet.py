@@ -3,6 +3,8 @@
 import tensorflow as tf;
 from models import SilNet;
 
+input_shape = (256,256,3);
+
 def main():
 
   silnet = SilNet(input_shape);
