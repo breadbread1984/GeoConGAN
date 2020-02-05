@@ -25,15 +25,21 @@ def main():
     avg_loss.update_state(loss);
     optimizer.apply_gradients(zip(grads, silnet.trainable_variables));
     if tf.equal(optimizer.iterations % 100, 0):
+      image = tf.clip_by_value((data + 1.) * 127.5, clip_value_min = 0., clip_value_max = 255.);
+      image = tf.cast(image, dtype = tf.uint8);
+      output = tf.clip_by_value(output[..., 0] * 255., clip_value_min = 0., clip_value_max = 255.);
+      output = tf.cast(output, dtype = tf.uint8);
+      visualize = tf.concat([image[0:1,...], output[0:1,...]], axis = 2);
       with log.as_default():
         tf.summary.scalar('loss', avg_loss.result(), step = optimizer.iterations);
+        tf.summary.image('segmentation', visualize, step = optimizer.iterations);
       print('Step #%d loss: %.6f' % (optimizer.iterations, avg_loss.result()));
       if avg_loss.result() < 0.01: break;
       avg_loss.reset_states();
     if tf.equal(optimizer.iterations % 1000, 0):
       checkpoint.save(os.path.join('checkpoint', 'ckpt'));
   silnet.save('silnet.h5');
-  
+
 if __name__ == "__main__":
 
   assert tf.executing_eagerly();
