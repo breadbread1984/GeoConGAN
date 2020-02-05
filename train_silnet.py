@@ -27,7 +27,7 @@ def main():
     if tf.equal(optimizer.iterations % 100, 0):
       image = tf.clip_by_value((data + 1.) * 127.5, clip_value_min = 0., clip_value_max = 255.);
       image = tf.cast(image, dtype = tf.uint8);
-      output = tf.clip_by_value(output[..., 0] * 255., clip_value_min = 0., clip_value_max = 255.);
+      output = tf.clip_by_value(output[..., 0:1] * 255., clip_value_min = 0., clip_value_max = 255.);
       output = tf.tile(tf.cast(output, dtype = tf.uint8), (1, 1, 1, 3));
       visualize = tf.concat([image[0:1,...], output[0:1,...]], axis = 2);
       with log.as_default():
