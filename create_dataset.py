@@ -101,7 +101,7 @@ def create_real_dataset(rootdir, filename = "real.tfrecord"):
       imgpath = os.path.join(rootdir, dir, 'color', file);
       if os.path.exists(os.path.join(rootdir, dir, 'masks', "image_" + result[1] + ".jpg")):
         labelpath = os.path.join(rootdir, dir, 'masks', "image_" + result[1] + ".jpg");
-      elif os.path.exists(os.path.join(rootdir, dir, 'masks', "image_" + result[1] + ".png"))::
+      elif os.path.exists(os.path.join(rootdir, dir, 'masks', "image_" + result[1] + ".png")):
         labelpath = os.path.join(rootdir, dir, 'masks', "image_" + result[1] + ".png");
       else:
         print("no label file for image " + imgpath);
@@ -115,10 +115,10 @@ def create_real_dataset(rootdir, filename = "real.tfrecord"):
       if mask is None:
         print("failed to open " + labelpath);
         continue;
-      mask = (mask[...,0] == 255).astype('int8');
       mask = cv2.resize(mask, (256,256));
-      img[np.where((mask != [255,]).all(axis = 2))] = [255,255,255];
+      mask = (mask == 255).astype('int8');
       img = cv2.resize(img, (256,256));
+      img[np.where((np.expand_dims(mask, axis = -1) != [255,]).all(axis = 2))] = [255,255,255];
       trainsample = tf.train.Example(features = tf.train.Features(
         feature = {
           'data': tf.train.Feature(bytes_list = tf.train.BytesList(value = [tf.io.encode_jpeg(img).numpy()])),
