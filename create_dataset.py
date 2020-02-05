@@ -57,6 +57,7 @@ def create_dataset(rootdir, with_object = False, filename = "synthesis.tfrecord"
               print("invalid joint coordinate number");
               continue;
             mask = np.logical_not(np.logical_and(np.logical_and(img[...,0] == 14, img[...,1] == 255),img[...,2] == 14)).astype('int8');
+            img[np.where((img == [14,255,14]).all(axis = 2))] = [255,255,255];
             trainsample = tf.train.Example(features = tf.train.Features(
               feature = {
                 'data': tf.train.Feature(bytes_list = tf.train.BytesList(value = [tf.io.encode_jpeg(img).numpy()])),
