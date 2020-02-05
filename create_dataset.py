@@ -101,7 +101,7 @@ def create_real_dataset(rootdir, filename = "real.tfrecord"):
       result = search(r"^image_[0-9]+\.jpg", file);
       if result is None: continue;
       imgpath = os.path.join(rootdir, dir, 'white', file);
-      labelpath = os.path.join(rootdir, dir, 'mask', file);
+      labelpath = os.path.join(rootdir, dir, 'masks', file);
       img = cv2.imread(imgpath);
       img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB);
       if img is None:
