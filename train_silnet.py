@@ -7,6 +7,7 @@ from models import SilNet;
 
 batch_size = 8;
 input_shape = (256,256,3);
+dataset_size = 93476;
 
 def main():
 
@@ -14,6 +15,7 @@ def main():
   optimizer = tf.keras.optimizers.Adam(learning_rate = 1e-3, beta_1 = 0.5);
   trainset = iter(tf.data.TFRecordDataset(os.path.join('datasets','synthesis.tfrecord')).repeat(-1).map(segment_parse_function).shuffle(batch_size).batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE));
   checkpoint = tf.train.Checkpoint(model = silnet, optimizer = optimizer);
+  checkpoint.restore(tf.train.latest_checkpoint('checkpoints'));
   log = tf.summary.create_file_writer('checkpoints');
   avg_loss = tf.keras.metrics.Mean(name = 'loss', dtype = tf.float32);
   while True:
