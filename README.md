@@ -1,5 +1,5 @@
 # GeoConGAN
-This project implement the 3d hand joint detection algorithm GeoConGAN
+This project implement the 3d hand joint detection algorithm introduced in [GANerated Hands for Real-Time 3D Hand Tracking from Monocular RGB](https://arxiv.org/abs/1712.01057).
 
 ## where to download dataset
 real hands images can be downloaded [here](https://handtracker.mpi-inf.mpg.de/data/RealHands.zip)
