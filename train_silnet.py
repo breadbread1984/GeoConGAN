@@ -8,7 +8,7 @@ from models import SilNet;
 batch_size = 8;
 input_shape = (256,256,3);
 synthetic_dataset_size = 93476;
-real_dataset_size = 23923;
+real_dataset_size = 49332;
 
 def main(is_synth = True):
 
