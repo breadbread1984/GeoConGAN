@@ -126,8 +126,8 @@ class GeoConGAN(tf.keras.Model):
     self.pool_B = ImgPool(50);
     self.l1 = tf.keras.losses.MeanAbsoluteError();
     self.l2 = tf.keras.losses.MeanSquaredError();
-    self.real_seg = tf.keras.models.load_model('models/real_silnet.h5', compile = False, custom_objects = {'tf': tf});
-    self.synth_seg = tf.keras.models.load_model('models/synthetic_silnet.h5', compile = False, custom_objects = {'tf': tf});
+    self.real_seg = tf.keras.models.load_model('models/real_silnet.h5', compile = False, custom_objects = {'tf': tf, 'Softmax': tf.keras.layers.Softmax});
+    self.synth_seg = tf.keras.models.load_model('models/synthetic_silnet.h5', compile = False, custom_objects = {'tf': tf, 'Softmax': tf.keras.layers.Softmax});
     self.real_seg.trainable = False;
     self.synth_seg.trainable = False;
     self.cce = tf.keras.losses.SparseCategoricalCrossentropy();
