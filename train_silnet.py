@@ -21,6 +21,7 @@ def main(is_synth = True):
   checkpoint = tf.train.Checkpoint(model = silnet, optimizer = optimizer);
   checkpoint.restore(tf.train.latest_checkpoint('checkpoints'));
   log = tf.summary.create_file_writer('checkpoints');
+  tf.summary.trace_on(graph=True, profiler=True);
   avg_loss = tf.keras.metrics.Mean(name = 'loss', dtype = tf.float32);
   while True:
     data, mask = next(trainset);
@@ -39,6 +40,7 @@ def main(is_synth = True):
       with log.as_default():
         tf.summary.scalar('loss', avg_loss.result(), step = optimizer.iterations);
         tf.summary.image('segmentation', visualize, step = optimizer.iterations);
+        tf.summary.trace_export(name = "trace", step = optimizer.iterations, profiler_outdir = "checkpoints");
       print('Step #%d loss: %.6f' % (optimizer.iterations, avg_loss.result()));
       if avg_loss.result() < 1e-5: break;
       avg_loss.reset_states();
