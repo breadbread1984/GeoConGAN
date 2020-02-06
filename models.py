@@ -113,11 +113,11 @@ class ImgPool(object):
       self.pool[index] = image;
       return retval;
 
-class CycleGAN(tf.keras.Model):
+class GeoConGAN(tf.keras.Model):
 
   def __init__(self, input_filters = 3, output_filters = 3, inner_filters = 64, blocks = 9, layers = 3, ** kwargs):
 
-    super(CycleGAN, self).__init__(**kwargs);
+    super(GeoConGAN, self).__init__(**kwargs);
     self.GA = Generator(input_filters = input_filters, output_filters = output_filters, inner_filters = inner_filters, blocks = blocks);
     self.GB = Generator(input_filters = output_filters, output_filters = input_filters, inner_filters = inner_filters, blocks = blocks);
     self.DA = Discriminator(input_filters = output_filters, inner_filters = inner_filters, layers = layers);
@@ -136,8 +136,8 @@ class CycleGAN(tf.keras.Model):
 
     real_A = inputs[0]; # real
     real_B = inputs[1]; # synth
-    mask_A = inputs[2];
-    mask_B = inputs[3];
+    mask_A = inputs[2]; # real mask
+    mask_B = inputs[3]; # synth mask
     # real_A => GA => fake_B   fake_B => DA => pred_fake_B
     # real_B => GA => idt_B    real_B => DA => pred_real_B
     # fake_B => GB => rec_A    fake_B => synth_seg => pred_mask_B
