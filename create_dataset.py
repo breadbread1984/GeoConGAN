@@ -87,7 +87,6 @@ def create_synthetic_dataset(rootdir, with_object = False, filename = "synthetic
 
 def create_real_dataset(rootdir, filename = "real.tfrecord"):
 
-  background = (14,255,14);
   dirs = ['user01','user02','user04_01','user05_01','user06_01','user06_03','user07_static', \
           'user01_static','user03','user04_02','user05_02','user06_02','user07'];
   if not os.path.exists('datasets'): os.mkdir('datasets');
