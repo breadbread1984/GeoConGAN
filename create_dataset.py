@@ -122,7 +122,7 @@ def create_real_dataset(rootdir, filename = "real.tfrecord"):
       mask = cv2.resize(mask, (256,256));
       mask = (mask == 255).astype('int8');
       img = cv2.resize(img, (256,256));
-      img[np.where((np.expand_dims(mask, axis = -1) != [255,]).all(axis = 2))] = [255,255,255];
+      img[np.where((np.expand_dims(mask, axis = -1) != [1,]).all(axis = 2))] = [255,255,255];
       trainsample = tf.train.Example(features = tf.train.Features(
         feature = {
           'data': tf.train.Feature(bytes_list = tf.train.BytesList(value = [tf.io.encode_jpeg(img).numpy()])),
