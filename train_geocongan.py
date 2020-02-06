@@ -3,10 +3,8 @@
 import os;
 import numpy as np;
 import tensorflow as tf;
-import tensorflow_datasets as tfds;
 from models import GeoConGAN;
-from create_dataset import parse_function_generator;
-from download_dataset import parse_function_generator;
+from create_dataset import real_parse_function, synthetic_parse_function;
 
 batch_size = 1;
 dataset_size = 93476;
