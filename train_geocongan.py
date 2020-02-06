@@ -10,7 +10,7 @@ from download_dataset import parse_function_generator;
 
 batch_size = 1;
 dataset_size = 93476;
-img_shape = (255,255,3);
+img_shape = (256,256,3);
 
 def main():
 
@@ -51,15 +51,15 @@ def main():
   # create log
   log = tf.summary.create_file_writer('checkpoints');
   # train model
-  avg_ga_loss = tf.keras.metrics.Mean(name = 'GA loss', dtype = tf.float32);
-  avg_gb_loss = tf.keras.metrics.Mean(name = 'GB loss', dtype = tf.float32);
-  avg_da_loss = tf.keras.metrics.Mean(name = 'DA loss', dtype = tf.float32);
-  avg_db_loss = tf.keras.metrics.Mean(name = 'DB loss', dtype = tf.float32);
+  avg_ga_loss = tf.keras.metrics.Mean(name = 'real2synth loss', dtype = tf.float32);
+  avg_gb_loss = tf.keras.metrics.Mean(name = 'synth2real loss', dtype = tf.float32);
+  avg_da_loss = tf.keras.metrics.Mean(name = 'synth disc loss', dtype = tf.float32);
+  avg_db_loss = tf.keras.metrics.Mean(name = 'real disc loss', dtype = tf.float32);
   while True:
     imageA, maskA = next(A);
     imageB, maskB = next(B);
     with tf.GradientTape(persistent = True) as tape:
-      outputs = geocongan((imageA, imageB));
+      outputs = geocongan((imageA, imageB, maskA, maskB));
       GA_loss = geocongan.GA_loss(outputs);
       GB_loss = geocongan.GB_loss(outputs);
       DA_loss = geocongan.DA_loss(outputs);
@@ -77,9 +77,6 @@ def main():
     optimizerGA.apply_gradients(zip(ga_grads, geocongan.GA.trainable_variables));
     optimizerGB.apply_gradients(zip(gb_grads, geocongan.GB.trainable_variables));
     if tf.equal(optimizerGA.iterations % 500, 0):
-      imageA, _ = next(testA);
-      imageB, _ = next(testB);
-      outputs = geocongan((imageA, imageB, maskA, maskB));
       real_A = tf.cast(tf.clip_by_value((imageA + 1) * 127.5, clip_value_min = 0., clip_value_max = 255.), dtype = tf.uint8);
       real_B = tf.cast(tf.clip_by_value((imageB + 1) * 127.5, clip_value_min = 0., clip_value_max = 255.), dtype = tf.uint8);
       fake_B = tf.cast(tf.clip_by_value((outputs[1] + 1) * 127.5, clip_value_min = 0., clip_value_max = 255.), dtype = tf.uint8);
@@ -93,7 +90,7 @@ def main():
         tf.summary.image('real generated synth', fake_B, step = optimizerGA.iterations);
         tf.summary.image('synth', real_B, step = optimizerGA.iterations);
         tf.summary.image('synth generated real', fake_A, step = optimizerGA.iterations);
-      print('Step #%d GA Loss: %.6f GB Loss: %.6f DA Loss: %.6f DB Loss: %.6f lr: %.6f' % \
+      print('Step #%d real2synth Loss: %.6f synth2real Loss: %.6f synth disc Loss: %.6f real disc Loss: %.6f lr: %.6f' % \
             (optimizerGA.iterations, avg_ga_loss.result(), avg_gb_loss.result(), avg_da_loss.result(), avg_db_loss.result(), \
             optimizerGA._hyper['learning_rate'](optimizerGA.iterations)));
       avg_ga_loss.reset_states();
@@ -106,10 +103,10 @@ def main():
     if GA_loss < 0.01 and GB_loss < 0.01 and DA_loss < 0.01 and DB_loss < 0.01: break;
   # save the network structure with weights
   if False == os.path.exists('models'): os.mkdir('models');
-  geocongan.GA.save(os.path.join('models', 'GA.h5'));
-  geocongan.GB.save(os.path.join('models', 'GB.h5'));
-  geocongan.DA.save(os.path.join('models', 'DA.h5'));
-  geocongan.DB.save(os.path.join('models', 'DB.h5'));
+  geocongan.GA.save(os.path.join('models', 'real2synth.h5'));
+  geocongan.GB.save(os.path.join('models', 'synth2real.h5'));
+  geocongan.DA.save(os.path.join('models', 'synthD.h5'));
+  geocongan.DB.save(os.path.join('models', 'realD.h5'));
 
 if __name__ == "__main__":
     
