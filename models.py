@@ -226,7 +226,22 @@ def RegNet(input_shape = (256,256,3), heatmap_size = (32,32), coeff = 1.):
   results = tf.keras.layers.Lambda(lambda x, shape: (x[...,:2] + 1.5) / 3 * tf.reshape((shape[:2] - 1), (1, 1, -1)), arguments = {'shape': heatmap_size})(results);
   # rendered 2D heatmaps.shape = (batch, heatmap.h, heatmap.w, 21)
   results = tf.keras.layers.Reshape((21, 1, 2))(results);
-  results = tf.keras.layers.Lambda(lambda x, shape: tf.tile(x, (1, shape[0] * shape[1], 1)) - 1, arguments = {'shape': heatmap_size})(results);
+  results = tf.keras.layers.Lambda(lambda x, shape: tf.tile(x, (1, shape[0] * shape[1], 1)), arguments = {'shape': heatmap_size})(results); # results.shape = (batch, 21, heatmap.h * heatmap.w, 2)
+  grid = tf.keras.layers.Lambda(
+    lambda x, shape: 
+      tf.tile(
+        tf.reshape(
+          tf.stack(
+            [
+              tf.tile(tf.reshape(tf.range(tf.cast(shape[0], dtype = tf.float32), dtype = tf.float32), (shape[0], 1)), (1, shape[1])),
+              tf.tile(tf.reshape(tf.range(tf.cast(shape[1], dtype = tf.float32), dtype = tf.float32), (1, shape[1])), (shape[1], 1))
+            ], axis = -1), # shape = (heapmat.h, heatmap.w, 2)
+          (1, 1, -1, 2)
+        ),
+        (tf.shape(x)[0], tf.shape(x)[1], 1, 1)
+      ), arguments = {'shape': heatmap_size}
+  )(results); # grid.shape = (batch, 21, heatmap.h * heatmap.w, 2)
+  results = tf.keras.layers.Lambda(lambda x: x[0] - x[1])([results, grid]);
   results = tf.keras.layers.Lambda(lambda x, c: (tf.math.square(x[...,0]) + tf.math.square(x[...,1])) / c, arguments = {'c': coeff})(results);
   results = tf.keras.layers.Lambda(lambda x, c, pi: tf.math.exp(-x / 2.) / (2. * pi * c), arguments = {'c': coeff, 'pi': np.pi})(results);
   results = tf.keras.layers.Reshape((21, heatmap_size[0] * heatmap_size[1]))(results);
