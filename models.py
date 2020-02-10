@@ -247,7 +247,7 @@ def RegNet(input_shape = (256,256,3), heatmap_size = (32,32), coeff = 1.):
   results = tf.keras.layers.Reshape((21, heatmap_size[0] * heatmap_size[1]))(results);
   results = tf.keras.layers.Lambda(lambda x: tf.transpose(x, (0, 2, 1)))(results);
   results = tf.keras.layers.Reshape((heatmap_size[0], heatmap_size[1], 21))(results);
-  # conv
+  # conv(downsample-upsample)
   results = tf.keras.layers.Conv2D(filters = 64, kernel_size = (3,3), strides = (2,2), padding = 'same', activation = tf.keras.layers.ReLU())(results);
   results = tf.keras.layers.Conv2D(filters = 128, kernel_size = (3,3), strides = (2,2), padding = 'same', activation = tf.keras.layers.ReLU())(results);
   results = tf.keras.layers.Concatenate(axis = -1)([shortcut, results]);
@@ -255,7 +255,7 @@ def RegNet(input_shape = (256,256,3), heatmap_size = (32,32), coeff = 1.):
   results = tf.keras.layers.Conv2D(filters = 64, kernel_size = (3,3), padding = 'same')(results);
   results = tf.keras.layers.Conv2DTranspose(filters = 21, kernel_size = (4,4), strides = (2,2), padding = 'same')(results);
   results = tf.keras.layers.Conv2DTranspose(filters = 21, kernel_size = (4,4), strides = (2,2), padding = 'same')(results);
-  final2D = results;
+  final2D = results; # final2D.shape = (batch, heatmap.height, heatmap.w, 21)
   results = tf.keras.layers.Flatten()(results);
   results = tf.keras.layers.Dense(units = 200)(results);
   results = tf.keras.layers.Dense(units = 63)(results);
