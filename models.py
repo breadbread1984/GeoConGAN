@@ -204,6 +204,46 @@ class GeoConGAN(tf.keras.Model):
     fake_loss = self.l2(tf.zeros_like(pred_fake_A), self.DB(self.pool_B.pick(fake_A)));
     return 0.5 * (real_loss + fake_loss);
 
+def RegNet(input_shape, heatmap_size, coeff = 1.):
+
+  inputs = tf.keras.Input(input_shape[-3:]);
+  model = tf.keras.applications.ResNet50(input_tensor = inputs, weights = 'imagenet', include_top = False);
+  results = tf.keras.layers.Conv2D(filters = 512, kernel_size = (3,3), padding = 'same')(model.outputs[0]);
+  results = tf.keras.layers.BatchNormalization()(results);
+  results = tf.keras.layers.ReLU()(results);
+  results = tf.keras.layers.Conv2D(filters = 256, kernel_size = (3,3), padding = 'same')(results);
+  results = tf.keras.layers.BatchNormalization()(results);
+  results = tf.keras.layers.ReLU()(results);
+  shortcut = results;
+  results = tf.keras.layers.Flatten()(results);
+  results = tf.keras.layers.Dense(units = 200)(results);
+  results = tf.keras.layers.Dense(units = 63)(results);
+  results = tf.keras.layers.Reshape((21,3))(results); # (batch, 21, 3)
+  # ProjLayer.shape = (batch, 21, 2)
+  results = tf.keras.layers.Lambda(lambda x, shape: (x[...,:2] + 1.5) / 3 * tf.reshape((shape[:2] - 1), (1, 1, -1)), arguments = {'shape': heatmap_size})(results);
+  # rendering layer.shape = (batch, 21, heatmap.h * heatmap.w)
+  results = tf.keras.layers.Reshape((21, 1, 2))(results);
+  results = tf.keras.layers.Lambda(lambda x, shape: tf.tile(x, (1, shape[0] * shape[1], 1)) - 1, arguments = {'shape': heatmap_size})(results);
+  results = tf.keras.layers.Lambda(lambda x, c: (tf.math.square(x[...,0]) + tf.math.square(x[...,1])) / c, arguments = {'c': coeff})(results);
+  results = tf.keras.layers.Lambda(lambda x, c, pi: tf.math.exp(-x / 2.) / (2. * pi * c), arguments = {'c': coeff, 'pi': np.pi})(results);
+  results = tf.keras.layers.Reshape((21, heatmap_size[0] * heatmap_size[1]))(results);
+  # reshape channel to last.shape = (batch, heatmap.h * heatmap.w, 21)
+  results = tf.keras.layers.Lambda(lambda x: tf.transpose(x, (0, 2, 1)))(results);
+  results = tf.keras.layers.Reshape((heatmap_size[0], heatmap_size[1], 21))(results);
+  
+  results = tf.keras.layers.Conv2D(filters = 64, kernel_size = (3,3), strides = (2,2), padding = 'same', activation = tf.keras.layers.ReLU())(results);
+  results = tf.keras.layers.Conv2D(filters = 128, kernel_size = (3,3), strides = (2,2), padding = 'same', activation = tf.keras.layers.ReLU())(results);
+  results = tf.keras.layers.Concatenate(axis = -1)([shortcut, results]);
+  results = tf.keras.layers.Conv2D(filters = 256, kernel_size = (3,3), padding = 'same', activation = tf.keras.layers.ReLU())(results);
+  results = tf.keras.layers.Conv2D(filters = 64, kernel_size = (3,3), padding = 'same')(results);
+  results = tf.keras.layers.Conv2DTranspose(filters = 21, kernel_size = (4,4), strides = (2,2), padding = 'same')(results);
+  results = tf.keras.layers.Conv2DTranspose(filters = 21, kernel_size = (4,4), strides = (2,2), padding = 'same')(results);
+  results = tf.keras.layers.Flatten()(results);
+  results = tf.keras.layers.Dense(units = 200)(results);
+  results = tf.keras.layers.Dense(units = 63)(results);
+  results = tf.keras.layers.Reshape((21,1,3))(results);
+  return tf.keras.Model(inputs = inputs, outputs = results);
+
 if __name__ == "__main__":
 
   assert tf.executing_eagerly();
