@@ -223,19 +223,19 @@ def RegNet(input_shape = (256,256,3), heatmap_size = (32,32), coeff = 1.):
   results = tf.keras.layers.Reshape((21,3))(results);
   intermediate3D = tf.keras.layers.Reshape((21,1,3))(results);
   # ProjLayer.shape = (batch, 21, 2)
-  results = tf.keras.layers.Lambda(lambda x, shape: (x[...,:2] + 1.5) / 3 * tf.reshape((shape[:2] - 1), (1, 1, -1)), arguments = {'shape': heatmap_size})(results);
+  results = tf.keras.layers.Lambda(lambda x, shape: (x[...,:2] + 1.5) / 3 * tf.reshape((tf.constant(shape[:2], dtype = tf.float32) - 1), (1, 1, -1)), arguments = {'shape': heatmap_size})(results);
   # rendered 2D heatmaps.shape = (batch, heatmap.h, heatmap.w, 21)
   results = tf.keras.layers.Reshape((21, 1, 2))(results);
-  results = tf.keras.layers.Lambda(lambda x, shape: tf.tile(x, (1, shape[0] * shape[1], 1)), arguments = {'shape': heatmap_size})(results); # results.shape = (batch, 21, heatmap.h * heatmap.w, 2)
+  results = tf.keras.layers.Lambda(lambda x, shape: tf.tile(x, (1, 1, shape[0] * shape[1], 1)), arguments = {'shape': heatmap_size})(results); # results.shape = (batch, 21, heatmap.h * heatmap.w, 2)
   grid = tf.keras.layers.Lambda(
     lambda x, shape: 
       tf.tile(
         tf.reshape(
           tf.stack(
             [
-              tf.tile(tf.reshape(tf.range(tf.cast(shape[0], dtype = tf.float32), dtype = tf.float32), (shape[0], 1)), (1, shape[1])),
-              tf.tile(tf.reshape(tf.range(tf.cast(shape[1], dtype = tf.float32), dtype = tf.float32), (1, shape[1])), (shape[1], 1))
-            ], axis = -1), # shape = (heapmat.h, heatmap.w, 2)
+              tf.tile(tf.reshape(tf.range(tf.cast(shape[1], dtype = tf.float32), dtype = tf.float32), (shape[1], 1)), (1, shape[0])),
+              tf.tile(tf.reshape(tf.range(tf.cast(shape[0], dtype = tf.float32), dtype = tf.float32), (1, shape[0])), (shape[1], 1))
+            ], axis = -1), # shape = (heapmat.w, heatmap.h, 2)
           (1, 1, -1, 2)
         ),
         (tf.shape(x)[0], tf.shape(x)[1], 1, 1)
@@ -267,3 +267,5 @@ if __name__ == "__main__":
   assert tf.executing_eagerly();
   silnet = SilNet((256,256,3));
   tf.keras.utils.plot_model(model = silnet, to_file = 'silnet.png', show_shapes = True, dpi = 64);
+  regnet = RegNet();
+  tf.keras.utils.plot_model(model = regnet, to_file = 'regnet.png', show_shapes = True, dpi = 64);
