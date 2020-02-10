@@ -240,12 +240,12 @@ def RegNet(input_shape = (256,256,3), heatmap_size = (32,32), coeff = 1.):
   results = tf.keras.layers.Conv2D(filters = 64, kernel_size = (3,3), padding = 'same')(results);
   results = tf.keras.layers.Conv2DTranspose(filters = 21, kernel_size = (4,4), strides = (2,2), padding = 'same')(results);
   results = tf.keras.layers.Conv2DTranspose(filters = 21, kernel_size = (4,4), strides = (2,2), padding = 'same')(results);
-  Final2D = results;
+  final2D = results;
   results = tf.keras.layers.Flatten()(results);
   results = tf.keras.layers.Dense(units = 200)(results);
   results = tf.keras.layers.Dense(units = 63)(results);
-  Final3D = tf.keras.layers.Reshape((21,1,3))(results);
-  return tf.keras.Model(inputs = inputs, outputs = (intermediate3D, Final2D, Final3D));
+  final3D = tf.keras.layers.Reshape((21,1,3))(results);
+  return tf.keras.Model(inputs = inputs, outputs = (intermediate3D, final2D, final3D));
 
 if __name__ == "__main__":
 
