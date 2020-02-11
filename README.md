@@ -63,3 +63,8 @@ GeoConGAN is trained to generate real-like hands from synthetic samples. it is t
 ```bash
 python3 train_geocongan.py
 ```
+
+there are a lot of inaccurated annotated mask in the real hand image dataset, so training this model is bound to unsuccessful. if you want to improve the training result, you need to wash the data yourself.
+
+## how to train RegNet
+
