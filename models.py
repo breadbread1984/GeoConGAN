@@ -220,8 +220,7 @@ def RegNet(input_shape = (256,256,3), heatmap_size = (32,32), coeff = 1.):
   results = tf.keras.layers.Flatten()(results);
   results = tf.keras.layers.Dense(units = 200)(results);
   results = tf.keras.layers.Dense(units = 63)(results);
-  results = tf.keras.layers.Reshape((21,3))(results);
-  intermediate3D = tf.keras.layers.Reshape((21,1,3))(results);
+  intermediate3D = tf.keras.layers.Reshape((21,3))(results);
   # ProjLayer.shape = (batch, 21, 2)
   # 2D positions of joints.shape = (batch, 21, 2) in sequence (x,y)
   results = tf.keras.layers.Lambda(lambda x, shape: (x[...,:2] + 1.5) / 3 * tf.reshape((tf.constant(shape[:2], dtype = tf.float32) - 1), (1, 1, -1)), arguments = {'shape': heatmap_size})(results);
@@ -259,7 +258,7 @@ def RegNet(input_shape = (256,256,3), heatmap_size = (32,32), coeff = 1.):
   results = tf.keras.layers.Flatten()(results);
   results = tf.keras.layers.Dense(units = 200)(results);
   results = tf.keras.layers.Dense(units = 63)(results);
-  final3D = tf.keras.layers.Reshape((21,1,3))(results);
+  final3D = tf.keras.layers.Reshape((21,3))(results);
   return tf.keras.Model(inputs = inputs, outputs = (intermediate3D, final2D, final3D));
 
 if __name__ == "__main__":
