@@ -139,34 +139,50 @@ def create_ganerated_dataset(rootdir, filename = "ganerated.tfrecord"):
   if not os.path.exists('datasets'): os.mkdir('datasets');
   writer = tf.io.TFRecordWriter(os.path.join('datasets', filename));
   count = 0;
+  grid = tf.tile(
+    tf.reshape(
+      tf.stack(
+        [
+          tf.tile(tf.reshape(tf.range(tf.cast(256, dtype = tf.float32), dtype = tf.float32), (256, 1)), (1, 256)),
+          tf.tile(tf.reshape(tf.range(tf.cast(256, dtype = tf.float32), dtype = tf.float32), (1, 256)), (256, 1))
+        ], axis = -1), # shape = (heapmat.w, heatmap.h, 2)
+      (1, -1, 2)
+    ),
+    (21, 1, 1)
+  ); # grid.shape = (21, 256*256, 2)
   for dir in dirs:
     for subdir in os.listdir(os.path.join(rootdir, "data", dir)):
       for file in os.listdir(os.path.join(rootdir, "data", dir, subdir)):
         result = search(r"^([0-9]+)_color_composed.png$", file);
         if result is None: continue;
         imgpath = os.path.join(rootdir, "data", dir, subdir, file);
-        croppath = os.path.join(rootdir, "data", dir, subdir, result[1] + "_crop_params.txt");
         pos3dpath = os.path.join(rootdir, "data", dir, subdir, result[1] + "_joint_pos.txt");
         pos2dpath = os.path.join(rootdir, "data", dir, subdir, result[1] + "_joint2D.txt");
-        if False == os.path.exists(croppath) or False == os.path.exists(pos3dpath) or False == os.path.exists(pos2dpath):
+        if False == os.path.exists(pos3dpath) or False == os.path.exists(pos2dpath):
           print("can't find label files of image " + file);
           continue;
         img = cv2.imread(imgpath);
         if img is None:
           print("can't open image " + file);
           continue;
-        f = open(croppath);
-        cropparam = np.array(f.readlines()[0].strip().split(',')).astype('float32');
         f = open(pos3dpath);
         pos3d = np.array(f.readlines()[0].strip().split(',')).astype('float32');
-        pos3d = np.reshape(pos3d, (-1, 3));
+        pos3d = np.reshape(pos3d, (-1, 3)); # (21, 3)
         f = open(pos2dpath);
         pos2d = np.array(f.readlines()[0].strip().split(',')).astype('float32');
-        pos2d = (np.reshape(pos2d, (-1, 2)) - np.expand_dims(cropparam[:2], axis = 0)) * cropparam[2];
-        for p in pos2d:
-          cv2.circle(img, tuple(p.astype('int32'), 2, (0,255,0), -1));
-        cv2.imshow('visualize', img);
-        cv2.waitKey();
+        pos2d = tf.reshape(pos2d, (-1, 1, 2)); # (21, 1, 2)
+        diff = pos2d - grid; # (21, 256*256, 2)
+        heatmap = tf.math.exp(-(tf.math.square(diff[...,0]) + tf.math.square(diff[...,1])) / (2 * np.pi)); # (21, 256 * 256)
+        heatmap = tf.transpose(tf.reshape(heatmap, (21, 256, 256)), (1,2,0)); # (256, 256, 21)
+        trainsample = tf.train.Example(features = tf.train.Features(
+          'data': tf.train.Feature(bytes_list = tf.train.BytesList(value = [tf.io.encode_jpeg(img).numpy()])),
+          'pos3d': tf.train.Feature(float_list = tf.train.FloatList(value = pos3d.reshape(-1))),
+          'heatmap': tf.train.Feature(float_list = tf.train.FloatList(value = heatmap.numpy().reshape(-1)))
+        ));
+        writer.write(trainsample.SerializeToString());
+        count += 1;
+  writer.close();
+  print('written ' + str(count) + " samples to " + filename);
 
 if __name__ == "__main__":
 
