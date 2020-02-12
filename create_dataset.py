@@ -40,6 +40,22 @@ def real_parse_function(serialized_example):
   mask = tf.cast(mask, dtype = tf.int32);
   return data, mask;
 
+def ganerated_parse_function(serialized_example):
+
+  feature = tf.io.parse_single_example(
+    serialized_example,
+    features = {
+      'data': tf.io.FixedLenFeature((), dtype = tf.string),
+      'pos3d': tf.io.FixedLenFeature((21,3), dtype = tf.float32),
+      'heatmap': tf.io.FixedLenFeature((32,32,21), dtype = tf.float32)
+    }
+  );
+  data = tf.io.decode_jpeg(feature['data']);
+  data = tf.cast(tf.reshape(data, [256,256, 3]), dtype = tf.float32) / 255.;
+  pos3d = tf.reshape(feature['pos3d'], (21,3));
+  heatmap = tf.reshape(feature['heatmap'], (32,32,21));
+  return data, (pos3d, heatmap);
+
 def create_synthetic_dataset(rootdir, with_object = False, filename = "synthetic.tfrecord"):
 
   background = (14,255,14);
