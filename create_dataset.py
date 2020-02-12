@@ -133,8 +133,44 @@ def create_real_dataset(rootdir, filename = "real.tfrecord"):
   writer.close();
   print('written ' + str(count) + " samples to " + filename);
 
+def create_ganerated_dataset(rootdir, filename = "ganerated.tfrecord"):
+
+  dirs = ['noObject', 'withObject'];
+  if not os.path.exists('datasets'): os.mkdir('datasets');
+  writer = tf.io.TFRecordWriter(os.path.join('datasets', filename));
+  count = 0;
+  for dir in dirs:
+    for subdir in os.listdir(os.path.join(rootdir, "data", dir)):
+      for file in os.listdir(os.path.join(rootdir, "data", dir, subdir)):
+        result = search(r"^([0-9]+)_color_composed.png$", file);
+        if result is None: continue;
+        imgpath = os.path.join(rootdir, "data", dir, subdir, file);
+        croppath = os.path.join(rootdir, "data", dir, subdir, result[1] + "_crop_params.txt");
+        pos3dpath = os.path.join(rootdir, "data", dir, subdir, result[1] + "_joint_pos.txt");
+        pos2dpath = os.path.join(rootdir, "data", dir, subdir, result[1] + "_joint2D.txt");
+        if False == os.path.exists(croppath) or False == os.path.exists(pos3dpath) or False == os.path.exists(pos2dpath):
+          print("can't find label files of image " + file);
+          continue;
+        img = cv2.imread(imgpath);
+        if img is None:
+          print("can't open image " + file);
+          continue;
+        f = open(croppath);
+        cropparam = np.array(f.readlines()[0].strip().split(',')).astype('float32');
+        f = open(pos3dpath);
+        pos3d = np.array(f.readlines()[0].strip().split(',')).astype('float32');
+        pos3d = np.reshape(pos3d, (-1, 3));
+        f = open(pos2dpath);
+        pos2d = np.array(f.readlines()[0].strip().split(',')).astype('float32');
+        pos2d = (np.reshape(pos2d, (-1, 2)) - np.expand_dims(cropparam[:2], axis = 0)) * cropparam[2];
+        for p in pos2d:
+          cv2.circle(img, tuple(p.astype('int32'), 2, (0,255,0), -1));
+        cv2.imshow('visualize', img);
+        cv2.waitKey();
+
 if __name__ == "__main__":
 
   assert tf.executing_eagerly();
   create_synthetic_dataset('/mnt/SynthHands_Release');
   create_real_dataset('/mnt/RealHands');
+  create_ganerated_dataset('/mnt/GANeratedHands_Release');
