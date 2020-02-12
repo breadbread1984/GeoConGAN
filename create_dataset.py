@@ -175,9 +175,11 @@ def create_ganerated_dataset(rootdir, filename = "ganerated.tfrecord"):
         heatmap = tf.math.exp(-(tf.math.square(diff[...,0]) + tf.math.square(diff[...,1])) / (2 * np.pi)); # (21, 256 * 256)
         heatmap = tf.transpose(tf.reshape(heatmap, (21, 256, 256)), (1,2,0)); # (256, 256, 21)
         trainsample = tf.train.Example(features = tf.train.Features(
-          'data': tf.train.Feature(bytes_list = tf.train.BytesList(value = [tf.io.encode_jpeg(img).numpy()])),
-          'pos3d': tf.train.Feature(float_list = tf.train.FloatList(value = pos3d.reshape(-1))),
-          'heatmap': tf.train.Feature(float_list = tf.train.FloatList(value = heatmap.numpy().reshape(-1)))
+          feature = {
+            'data': tf.train.Feature(bytes_list = tf.train.BytesList(value = [tf.io.encode_jpeg(img).numpy()])),
+            'pos3d': tf.train.Feature(float_list = tf.train.FloatList(value = pos3d.reshape(-1))),
+            'heatmap': tf.train.Feature(float_list = tf.train.FloatList(value = heatmap.numpy().reshape(-1)))
+          }
         ));
         writer.write(trainsample.SerializeToString());
         count += 1;
