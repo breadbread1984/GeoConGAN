@@ -143,13 +143,13 @@ def create_ganerated_dataset(rootdir, filename = "ganerated.tfrecord"):
     tf.reshape(
       tf.stack(
         [
-          tf.tile(tf.reshape(tf.range(tf.cast(256, dtype = tf.float32), dtype = tf.float32), (256, 1)), (1, 256)),
-          tf.tile(tf.reshape(tf.range(tf.cast(256, dtype = tf.float32), dtype = tf.float32), (1, 256)), (256, 1))
-        ], axis = -1), # shape = (heapmat.w, heatmap.h, 2)
+          tf.tile(tf.reshape(tf.range(tf.cast(32, dtype = tf.float32), dtype = tf.float32), (1, 32)), (32, 1)), # every row is composed of different x
+          tf.tile(tf.reshape(tf.range(tf.cast(32, dtype = tf.float32), dtype = tf.float32), (32, 1)), (1, 32))  # every column is composed of different y
+        ], axis = -1), # shape = (heapmat.h, heatmap.w, 2) in sequence of (x,y)
       (1, -1, 2)
     ),
     (21, 1, 1)
-  ); # grid.shape = (21, 256*256, 2)
+  ); # grid.shape = (21, 32 * 32, 2)
   for dir in dirs:
     for subdir in os.listdir(os.path.join(rootdir, "data", dir)):
       for file in os.listdir(os.path.join(rootdir, "data", dir, subdir)):
@@ -169,11 +169,11 @@ def create_ganerated_dataset(rootdir, filename = "ganerated.tfrecord"):
         pos3d = np.array(f.readlines()[0].strip().split(',')).astype('float32');
         pos3d = np.reshape(pos3d, (-1, 3)); # (21, 3)
         f = open(pos2dpath);
-        pos2d = np.array(f.readlines()[0].strip().split(',')).astype('float32');
+        pos2d = np.array(f.readlines()[0].strip().split(',')).astype('float32') / 8; # 256->32
         pos2d = tf.reshape(pos2d, (-1, 1, 2)); # (21, 1, 2)
-        diff = pos2d - grid; # (21, 256*256, 2)
-        heatmap = tf.math.exp(-(tf.math.square(diff[...,0]) + tf.math.square(diff[...,1])) / (2 * np.pi)); # (21, 256 * 256)
-        heatmap = tf.transpose(tf.reshape(heatmap, (21, 256, 256)), (1,2,0)); # (256, 256, 21)
+        diff = pos2d - grid; # (21, 32 * 32, 2)
+        heatmap = tf.math.exp(-(tf.math.square(diff[...,0]) + tf.math.square(diff[...,1])) / (2 * np.pi)); # (21, 32 * 32)
+        heatmap = tf.transpose(tf.reshape(heatmap, (21, 32, 32)), (1,2,0)); # (32, 32, 21)
         trainsample = tf.train.Example(features = tf.train.Features(
           feature = {
             'data': tf.train.Feature(bytes_list = tf.train.BytesList(value = [tf.io.encode_jpeg(img).numpy()])),
