@@ -178,6 +178,7 @@ def create_ganerated_dataset(rootdir, filename = "ganerated.tfrecord"):
           print("can't find label files of image " + file);
           continue;
         img = cv2.imread(imgpath);
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB);
         if img is None:
           print("can't open image " + file);
           continue;
