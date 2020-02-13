@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import os;
+import numpy as np;
 import cv2;
 import tensorflow as tf;
 from create_dataset import ganerated_parse_function;
