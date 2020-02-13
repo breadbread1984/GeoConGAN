@@ -18,7 +18,7 @@ ptpairs = [(0,1),(1,2),(2,3),(3,4), \
 def main():
 
   regnet = RegNet(input_shape);
-  optimizer = tf.keras.optimizers.Adam(learning_rate = 1e-3, beta_1 = 0.5);
+  optimizer = tf.keras.optimizers.Adam(learning_rate = 1e-4, beta_1 = 0.5);
   trainset = iter(tf.data.TFRecordDataset(os.path.join('datasets','ganerated.tfrecord')).repeat(-1).map(ganerated_parse_function).shuffle(batch_size).batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE));
   checkpoint = tf.train.Checkpoint(model = regnet, optimizer = optimizer);
   checkpoint.restore(tf.train.latest_checkpoint('checkpoints'));
