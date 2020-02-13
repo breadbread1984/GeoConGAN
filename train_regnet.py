@@ -50,6 +50,7 @@ def main():
         cv2.circle(image, pt, 3, (0,255,0), -1);
       for pair in ptpairs:
         cv2.line(image, pts[pair[0]], pts[pair[1]], (0,0,255), 2);
+      image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB);
       image = np.expand_dims(image, axis = 0);
       with log.as_default():
         tf.summary.scalar('loss', avg_loss.result(), step = optimizer.iterations);
