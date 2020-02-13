@@ -37,7 +37,7 @@ def main():
     if tf.equal(optimizer.iterations % 100, 0):
       image = tf.clip_by_value(data[0,...] * 255., clip_value_min = 0., clip_value_max = 255.);
       image = tf.cast(image, dtype = tf.uint8); # (height, width, 3)
-      image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR);
+      image = cv2.cvtColor(image.numpy(), cv2.COLOR_RGB2BGR);
       heatmaps = final2d[0,...];
       heatmaps = tf.transpose(heatmaps, (2, 0, 1)).numpy(); # heatmaps.shape = (21, height, width)
       pts = list();
