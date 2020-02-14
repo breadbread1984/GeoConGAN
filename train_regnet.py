@@ -7,7 +7,7 @@ import tensorflow as tf;
 from create_dataset import ganerated_parse_function;
 from models import RegNet;
 
-batch_size = 16;
+batch_size = 28;
 input_shape = (256,256,3);
 ptpairs = [(0,1),(1,2),(2,3),(3,4), \
              (0,5),(5,6),(6,7),(7,8), \
@@ -18,7 +18,7 @@ ptpairs = [(0,1),(1,2),(2,3),(3,4), \
 def main():
 
   regnet = RegNet(input_shape);
-  optimizer = tf.keras.optimizers.Adam(learning_rate = 1e-4, beta_1 = 0.5);
+  optimizer = tf.keras.optimizers.Adam(learning_rate = 1e-4);
   trainset = iter(tf.data.TFRecordDataset(os.path.join('datasets','ganerated.tfrecord')).repeat(-1).map(ganerated_parse_function).shuffle(batch_size).batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE));
   checkpoint = tf.train.Checkpoint(model = regnet, optimizer = optimizer);
   checkpoint.restore(tf.train.latest_checkpoint('checkpoints'));
@@ -31,7 +31,7 @@ def main():
       inter3d_loss = tf.keras.losses.MeanSquaredError()(pos3d, inter3d);
       final2d_loss = tf.keras.losses.MeanSquaredError()(heatmap, final2d);
       final3d_loss = tf.keras.losses.MeanSquaredError()(pos3d, final3d);
-      loss = inter3d_loss + final2d_loss + final3d_loss;
+      loss = 100 * inter3d_loss + final2d_loss + 100 * final3d_loss;
     grads = tape.gradient(loss, regnet.trainable_variables);
     avg_loss.update_state(loss);
     optimizer.apply_gradients(zip(grads, regnet.trainable_variables));
