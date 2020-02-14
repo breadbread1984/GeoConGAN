@@ -19,7 +19,7 @@ dataset_size = 331499;
 def main():
 
   regnet = RegNet(input_shape);
-  optimizer = tf.keras.optimizers.Adam(tf.keras.optimizers.schedules.ExponentialDecay(1e-4, decay_steps = dataset_size // batch_size, decay_rate = 0.5));
+  optimizer = tf.keras.optimizers.Adam(tf.keras.optimizers.schedules.ExponentialDecay(1e-3, decay_steps = dataset_size // batch_size, decay_rate = 0.5));
   trainset = iter(tf.data.TFRecordDataset(os.path.join('datasets','ganerated.tfrecord')).repeat(-1).map(ganerated_parse_function).shuffle(batch_size).batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE));
   checkpoint = tf.train.Checkpoint(model = regnet, optimizer = optimizer);
   checkpoint.restore(tf.train.latest_checkpoint('checkpoints'));
