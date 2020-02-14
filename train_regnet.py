@@ -7,7 +7,7 @@ import tensorflow as tf;
 from create_dataset import ganerated_parse_function;
 from models import RegNet;
 
-batch_size = 28;
+batch_size = 32;
 input_shape = (256,256,3);
 ptpairs = [(0,1),(1,2),(2,3),(3,4), \
              (0,5),(5,6),(6,7),(7,8), \
@@ -19,7 +19,7 @@ dataset_size = 331499;
 def main():
 
   regnet = RegNet(input_shape);
-  optimizer = tf.keras.optimizers.Adam(tf.keras.optimizers.schedules.ExponentialDecay(1e-4, decay_steps = dataset_size, decay_rate = 0.5));
+  optimizer = tf.keras.optimizers.Adam(tf.keras.optimizers.schedules.ExponentialDecay(1e-4, decay_steps = dataset_size // batch_size, decay_rate = 0.5));
   trainset = iter(tf.data.TFRecordDataset(os.path.join('datasets','ganerated.tfrecord')).repeat(-1).map(ganerated_parse_function).shuffle(batch_size).batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE));
   checkpoint = tf.train.Checkpoint(model = regnet, optimizer = optimizer);
   checkpoint.restore(tf.train.latest_checkpoint('checkpoints'));
