@@ -14,11 +14,12 @@ ptpairs = [(0,1),(1,2),(2,3),(3,4), \
              (0,9),(9,10),(10,11),(11,12), \
              (0,13),(13,14),(14,15),(15,16), \
              (0,17),(17,18),(18,19),(19,20)];
+dataset_size = 331499;
 
 def main():
 
   regnet = RegNet(input_shape);
-  optimizer = tf.keras.optimizers.Adam(learning_rate = 1e-4);
+  optimizer = tf.keras.optimizers.Adam(tf.keras.optimizers.schedules.ExponentialDecay(1e-4, decay_steps = dataset_size, decay_rate = 0.5));
   trainset = iter(tf.data.TFRecordDataset(os.path.join('datasets','ganerated.tfrecord')).repeat(-1).map(ganerated_parse_function).shuffle(batch_size).batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE));
   checkpoint = tf.train.Checkpoint(model = regnet, optimizer = optimizer);
   checkpoint.restore(tf.train.latest_checkpoint('checkpoints'));
