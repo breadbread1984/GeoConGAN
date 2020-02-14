@@ -51,7 +51,7 @@ def ganerated_parse_function(serialized_example):
     }
   );
   data = tf.io.decode_jpeg(feature['data']);
-  data = tf.cast(tf.reshape(data, (256,256,3)), dtype = tf.float32) / 255.;
+  data = tf.cast(tf.reshape(data, (256, 256, 3)), dtype = tf.float32) / 127.5 - 1;
   pos3d = tf.reshape(feature['pos3d'], (21,3));
   heatmap = tf.reshape(feature['heatmap'], (32,32,21));
   return data, (pos3d, heatmap);
