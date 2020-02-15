@@ -68,3 +68,11 @@ there are a lot of inaccurated annotated mask in the real hand image dataset, so
 
 ## how to train RegNet
 
+train RegNet with command
+
+```python
+python3 train_regnet.py
+```
+
+unfortunately, I failed training regnet as well. my model can't converge. hope you can contribute to this project to make it work.
+
